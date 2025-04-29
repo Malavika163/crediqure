@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:crediqure/dashboard.dart';
 import 'package:crediqure/forgot_password_screen.dart';
 import 'package:crediqure/signup_screen.dart';
+import 'package:crediqure/tabledata.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class CrediqureLoginScreen extends StatefulWidget {
   const CrediqureLoginScreen({super.key});
@@ -18,41 +20,88 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
   TextEditingController passwordcontroller = TextEditingController();
   var datavalue = "";
 
+  final String url = 'https://www.crediqure.com/appdevelopment/malavika/web/dashboard.php';
+
+  Future<void> _launchURL() async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch $url';
+    }
+  }
+
   Future<void> login_record() async {
     try {
+      // Check for admin login
+      if (emailcontroller.text == 'maxvinoy@gmail.com' &&
+          passwordcontroller.text == 'admin123') {
+        await _launchURL();
+        return;
+      }
+
       String uri = "https://www.crediqure.com/appdevelopment/malavika/login.php";
       var res = await http.post(Uri.parse(uri), body: {
         "emailcontroller": emailcontroller.text,
         "passwordcontroller": passwordcontroller.text,
       });
+
       var response = jsonDecode(res.body);
       print(response);
 
       var count = response['vincount'];
-      var vinid = response['vinid']; // Store User ID
+      var vinid = response['vinid'];
 
       if (count >= 1) {
         setState(() {
           datavalue = "Successful login, User ID: $vinid";
         });
 
-        
+        String loginName = emailcontroller.text.split('@')[0];
+
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DashboardScreen(vinid: vinid),
+            builder: (context) => DashboardScreen(
+              vinid: vinid,
+              loginName: loginName,
+            ),
           ),
         );
       } else {
         setState(() {
-          datavalue = "Login failed, please try again.";
+          datavalue = "Login failed.";
         });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Login Failed'),
+            content: const Text('Incorrect email or password. Please try again.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
     } catch (e) {
       print(e);
       setState(() {
-        datavalue = "An error occurred. Please try again.";
+        datavalue = "An error occurred.";
       });
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text('Something went wrong. Please try again later.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -68,7 +117,7 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
             Align(
               alignment: Alignment.topCenter,
               child: RichText(
-                text: TextSpan(
+                text: const TextSpan(
                   children: [
                     TextSpan(
                       text: 'CREDI',
@@ -90,24 +139,24 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 70),
-            Padding(
-              padding: const EdgeInsets.only(left: 5, bottom: 5),
+            const SizedBox(height: 70),
+            const Padding(
+              padding: EdgeInsets.only(left: 5, bottom: 5),
               child: Text('EMAIL'),
             ),
             TextField(
               controller: emailcontroller,
               decoration: InputDecoration(
                 hintText: "Enter your email",
-                suffixIcon: Icon(Icons.person),
+                suffixIcon: const Icon(Icons.person),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
-            SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.only(left: 5, bottom: 5),
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.only(left: 5, bottom: 5),
               child: Text('PASSWORD'),
             ),
             TextField(
@@ -130,7 +179,7 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -140,11 +189,11 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
                       builder: (context) => CrediqureFogotPasswordScreen(),
                     ));
                   },
-                  child: Text('Forgot Password?'),
+                  child: const Text('Forgot Password?'),
                 ),
               ],
             ),
-            SizedBox(height: 60),
+            const SizedBox(height: 60),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: SizedBox(
@@ -152,11 +201,11 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff800000),
+                    backgroundColor: const Color(0xff800000),
                     foregroundColor: Colors.white,
                   ),
                   onPressed: login_record,
-                  child: Text('Login'),
+                  child: const Text('Login'),
                 ),
               ),
             ),
@@ -167,11 +216,11 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
                 child: GestureDetector(
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => CrediqureSignupScreen(),
+                      builder: (context) => const CrediqureSignupScreen(),
                     ));
                   },
                   child: RichText(
-                    text: TextSpan(
+                    text: const TextSpan(
                       children: [
                         TextSpan(
                           text: 'New to CREDIQURE? ',
@@ -195,8 +244,17 @@ class _CrediqureLoginScreenState extends State<CrediqureLoginScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
-            Text(datavalue),
+            // const SizedBox(height: 20),
+            // Text(datavalue),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (context) => const TableScreen()),
+            //     );
+            //   },
+            //   child: const Text("Tables"),
+            // ),
           ],
         ),
       ),

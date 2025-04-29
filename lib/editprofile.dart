@@ -4,7 +4,6 @@ import 'dart:convert';
 
 class EditProfileScreen extends StatefulWidget {
   final String vinid; // Receiving user ID
-  //
 
   const EditProfileScreen({super.key, required this.vinid});
 
@@ -13,94 +12,101 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  Future<void> updateUserData() async {
-  try {
-    String uri = "https://www.crediqure.com/appdevelopment/malavika/update_data.php";
-    
-    var response = await http.post(
-      Uri.parse(uri),
-      body: {
-        'loginid': widget.vinid, // Pass user ID for reference
-        'mobileno': mobileController.text,
-        'emailid': emailController.text,
-        'address': addressController.text,
-      },
-    );
+  late TextEditingController mobileController;
+  late TextEditingController emailController;
+  late TextEditingController addressController;
 
-    var msg = jsonDecode(response.body);
-print(msg);
-var a1=msg;
-    if (a1['success'] == "true") {
-      setState(() {
-        errorMessage = "Profile updated successfully!";
-      });
-    } else {
-      setState(() {
-        errorMessage = "Failed to update profile. Please try again.";
-      });
-    }
-  } catch (e) {
-    setState(() {
-      errorMessage = "An error occurred: $e";
-    });
-  }
-}
-
-
-  List userdata=[];
-  var datavalue = "";
-  var datavalue5="";
-  var datavalue6="";
-  var datavalue7="";
-
-  TextEditingController mobileController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController addressController = TextEditingController();
-  
-
-  bool isLoading = true; // Show loader initially
-  String errorMessage = ""; // Store error messages
+  String username = '';
+  String errorMessage = '';
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    mobileController = TextEditingController();
+    emailController = TextEditingController();
+    addressController = TextEditingController();
     fetchUserData();
   }
 
-  // Fetch user details using GET request
-  Future<void> fetchUserData() async
-  {
-    try {
-      String uri = "https://www.crediqure.com/appdevelopment/malavika/get_user.php?loginid=${widget.vinid}";
-      var response = await http.post(Uri.parse(uri), body:
-      {
-        'mobileno': mobileController.text,
-        'emailid': emailController.text,
-      }
-      );
-      setState(()
-      {
-        var msg = jsonDecode(response.body);
-        datavalue=(msg['userInfo']['1']);
-        datavalue5=(msg['userInfo']['5']);
-        datavalue6=(msg['userInfo']['6']);
-        datavalue7=(msg['userInfo']['7']);
-      });
+  @override
+  void dispose() {
+    mobileController.dispose();
+    emailController.dispose();
+    addressController.dispose();
+    super.dispose();
+  }
 
-    }
-    catch(e)
-    {
-      print(e);
+  Future<void> fetchUserData() async {
+    try {
+      final uri = Uri.parse(
+          "https://www.crediqure.com/appdevelopment/malavika/get_user.php?loginid=${widget.vinid}");
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final msg = jsonDecode(response.body);
+        final userInfo = msg['userInfo'];
+
+        setState(() {
+          username = userInfo['1'] ?? '';
+          emailController.text = userInfo['5'] ?? '';
+          mobileController.text = userInfo['6'] ?? '';
+          addressController.text = userInfo['7'] ?? '';
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load user data.';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'An error occurred: $e';
+        isLoading = false;
+      });
     }
   }
 
+  Future<void> updateUserData() async {
+    try {
+      final uri = Uri.parse(
+          "https://www.crediqure.com/appdevelopment/malavika/update_data.php");
+
+      final response = await http.post(
+        uri,
+        body: {
+          'loginid': widget.vinid,
+          'mobileno': mobileController.text,
+          'emailid': emailController.text,
+          'address': addressController.text,
+        },
+      );
+
+      final msg = jsonDecode(response.body);
+
+      if (msg['success'] == "true") {
+        setState(() {
+          errorMessage = "Profile updated successfully!";
+        });
+      } else {
+        setState(() {
+          errorMessage = "Failed to update profile. Please try again.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "An error occurred: $e";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -109,97 +115,87 @@ var a1=msg;
         title: const Text("Edit Profile", style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
-      body:
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // App logo placeholder
+                  // Center(
+                  //   child: Image.asset('assets/logo.png', height: 100),
+                  // ),
+                  const SizedBox(height: 20),
 
-      Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Center(
-              child: Image.asset('', height: 100), // App logo
-            ),
-            const SizedBox(height: 20),
+                  // Display User ID and Username
+                  Text("User ID: ${widget.vinid}",
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text("Username: $username",
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
 
-            // Display User ID
-Text("User ID: ${widget.vinid}",style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-Text("Username: $datavalue",style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-
-            const SizedBox(height: 20),
-
-            // Input Fields
-            
-            Container(
-            margin: EdgeInsets.all(10),
-            child: TextFormField(
-              controller: emailController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                label: Text('$datavalue5'),
-              ),
-            ),
-          ),
-
-          
-
-            const SizedBox(height: 15),
-
- Container(
-            margin: EdgeInsets.all(10),
-            child: TextFormField(
-              controller: mobileController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                label: Text('$datavalue6'),
-              ),
-            ),
-          ),
-
-
-
-            const SizedBox(height: 15),
- Container(
-            margin: EdgeInsets.all(10),
-            child: TextFormField(     
-  controller: addressController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                label: Text('$datavalue7'),
-              ),
-            ),
-          ),
-
-            const SizedBox(height: 30),
-
-            // Show error message if API fails
-            if (errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                  errorMessage,
-                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-            // Update Profile Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-            ),
-          
-            ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff800000),
-                    foregroundColor: Colors.white,
+                  // Email Field
+                  TextFormField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Email',
+                    ),
+                    keyboardType: TextInputType.emailAddress,
                   ),
-                  onPressed:updateUserData,
-                  child: const Text('Update'),
-                ),
+                  const SizedBox(height: 15),
 
-          ],
-        ),
-      ),
+                  // Mobile Number Field
+                  TextFormField(
+                    controller: mobileController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Mobile Number',
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Address Field
+                  TextFormField(
+                    controller: addressController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Address',
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Error Message
+                  if (errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        errorMessage,
+                        style: const TextStyle(
+                            color: Colors.red, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+
+                  // Update Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff800000),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: updateUserData,
+                      child: const Text('Update'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
-
 }

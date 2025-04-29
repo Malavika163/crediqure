@@ -1,108 +1,198 @@
+import 'dart:convert';
+import 'package:crediqure/paymenthistory.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
-class LoanDetailsPage extends StatelessWidget {
-  final Map<String, dynamic> loan = {
-    'loanId': 'LN123456',
-    'borrowerName': 'John Doe',
-    'amount': 50000.0,
-    'interestRate': 5.5,
-    'startDate': DateTime(2023, 1, 15),
-    'endDate': DateTime(2028, 1, 15),
-    'status': 'Active',
-  };
+class LoanDetailsPage extends StatefulWidget {
+  final String vinid;
 
-  LoanDetailsPage({super.key});
+  const LoanDetailsPage({super.key, required this.vinid});
+
+  @override
+  State<LoanDetailsPage> createState() => _LoanDetailsPageState();
+}
+
+class _LoanDetailsPageState extends State<LoanDetailsPage> {
+  List userInfo1 = [];
+
+  Future<void> Getrecord11() async {
+    try {
+      String uri1 =
+          "https://www.crediqure.com/appdevelopment/malavika/existing_loan.php?vinid=${widget.vinid}";
+      var response1 = await http.get(Uri.parse(uri1));
+      setState(() {
+        userInfo1 = jsonDecode(response1.body);
+        print(userInfo1);
+      });
+    } catch (e) {
+      print("Error fetching data: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Getrecord11();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-       
- leading: IconButton(
-    icon: Icon(Icons.arrow_back),
-    onPressed: () {
-      Navigator.pop(context); // This will navigate back
-    },
-  ),
-        title: const Text('Loan Details',style: TextStyle(color: Colors.white),),
-        centerTitle: true,
-        backgroundColor:  Color(0xff800000),
+         leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white,
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text(
+          "Loan Details",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Color(0xff800000),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 5.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Center(
-                  child: Text(
-                    'Loan Summary',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xff800000),
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            // Display VIN ID
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.indigo.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.person,
+                    color: Color(0xff111184),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'User id: ${widget.vinid}',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-                ),
-                const Divider(),
-                const SizedBox(height: 10),
-                DetailRow(icon: Icons.account_balance, label: 'Loan ID', value: loan['loanId']),
-                DetailRow(icon: Icons.person, label: 'Borrower Name', value: loan['borrowerName']),
-                DetailRow(icon: Icons.attach_money, label: 'Amount', value: '₹${loan['amount'].toStringAsFixed(2)}'),
-                DetailRow(icon: Icons.percent, label: 'Interest Rate', value: '${loan['interestRate']}%'),
-                DetailRow(icon: Icons.date_range, label: 'Start Date', value: DateFormat('dd MMM yyyy').format(loan['startDate'])),
-                DetailRow(icon: Icons.event, label: 'End Date', value: DateFormat('dd MMM yyyy').format(loan['endDate'])),
-                DetailRow(icon: Icons.info, label: 'Status', value: loan['status']),
-              ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+
+            // Loan List
+            Expanded(
+              child: userInfo1.isEmpty
+                  ? const Center(child: Text("No loan records found."))
+                  : ListView.builder(
+                      itemCount: userInfo1.length,
+                      itemBuilder: (context, index) {
+                        final item = userInfo1[index];
+                        return Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 4),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Title
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.badge,
+                                      color: Color(0xff111184),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Loan ID: ${item['loanmasterid']}",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Info Rows
+                                infoRow(Icons.account_balance, 'Loan Type',
+                                    item['loantype']),
+                                infoRow(Icons.person, 'Login ID',
+                                    item['loginid']),
+                                infoRow(Icons.calendar_month, 'Loan Date',
+                                    item['loandate']),
+                                infoRow(Icons.hourglass_bottom, 'Loan Started',
+                                    item['loanstarted']),
+                                infoRow(Icons.currency_rupee, 'Amount',
+                                    item['loanamount']),
+
+                                const SizedBox(height: 12),
+
+                                // Button to repayment history
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              RepaymentHistoryPage(
+                                            loanId: item['loanmasterid'],
+                                            loanamount: double.tryParse(
+                                                    item['loanamount']) ??
+                                                0.0,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.history),
+                                    label: const Text("Repayment History"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.indigo,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(30),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-class DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const DetailRow({super.key, required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
+  // Helper widget for a row with icon + label + value
+  Widget infoRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Icon(icon, color: Color(0xff800000), size: 24),
-          const SizedBox(width: 12),
+          Icon(icon, size: 20, color: Colors.grey[700]),
+          const SizedBox(width: 8),
           Text(
-            '$label:',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
+            "$label: ",
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.right,
-            ),
+            child: Text(value, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),

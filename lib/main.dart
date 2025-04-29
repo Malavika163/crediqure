@@ -1,4 +1,4 @@
-import 'package:crediqure/homepage.dart';
+import 'package:crediqure/splashscreen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
             primary: Color(0xff111184), seedColor: Colors.black),
         useMaterial3: true,
       ),
-      home:CrediQureHomeScreen(),
+      home:SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

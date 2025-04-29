@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:crediqure/googlemap.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -53,11 +52,12 @@ class _LocateUsPageState extends State<LocateUsPage> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
          leading: IconButton(
-    icon: Icon(Icons.arrow_back),
+    icon: Icon(Icons.arrow_back,color: Colors.white,),
     onPressed: () {
       Navigator.pop(context); // This will navigate back
     },

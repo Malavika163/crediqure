@@ -1,24 +1,37 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class UpdatePasswordScreen extends StatefulWidget {
   final String vinid;
+  final String loginName;
 
-  const UpdatePasswordScreen({super.key, required this.vinid});
+  const UpdatePasswordScreen({
+    super.key,
+    required this.vinid,
+    required this.loginName,
+  });
 
   @override
   State<UpdatePasswordScreen> createState() => _UpdatePasswordScreenState();
 }
 
 class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
- bool isNewPasswordVisible = true;
+  bool isNewPasswordVisible = true;
   bool isConfirmPasswordVisible = true;
 
   final TextEditingController oldPasswordController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+
+  String get displayName {
+    String namePart = widget.loginName.split('@').first;
+    if (namePart.isNotEmpty) {
+      return namePart[0].toUpperCase() + namePart.substring(1);
+    } else {
+      return widget.loginName;
+    }
+  }
 
   Future<void> updatePassword() async {
     if (newPasswordController.text != confirmPasswordController.text) {
@@ -30,7 +43,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
     var response = await http.post(
       url,
       body: {
-        "vinid": widget.vinid, 
+        "vinid": widget.vinid,
         "old_password": oldPasswordController.text,
         "new_password": newPasswordController.text,
       },
@@ -47,31 +60,31 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
   void showSnackbar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: TextStyle(color: Colors.white)),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: color,
       ),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
+        leading: BackButton(color: Colors.white),
         backgroundColor: const Color(0xff800000),
-        title: const Text('Edit password', style: TextStyle(color: Colors.white)),
+        title: Text(
+          'Hi, $displayName',
+          style: const TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            // Header Logo
+            const SizedBox(height: 40),
             Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.center,
               child: RichText(
                 text: const TextSpan(
                   children: [
@@ -95,21 +108,19 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-
-            
+            const SizedBox(height: 30),
             Text(
-              "User ID: ${widget.vinid}", 
+              "User ID: ${widget.vinid}",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 30),
             const Padding(
               padding: EdgeInsets.only(left: 5, bottom: 5),
               child: Text('EXISTING PASSWORD'),
             ),
             TextField(
-              controller:oldPasswordController,
+              controller: oldPasswordController,
               obscureText: true,
               decoration: InputDecoration(
                 hintText: "Enter your existing password",
@@ -120,7 +131,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
             const Padding(
               padding: EdgeInsets.only(left: 5, bottom: 5),
               child: Text('NEW PASSWORD'),
@@ -132,7 +142,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 hintText: "Enter new password",
                 suffixIcon: IconButton(
                   icon: Icon(
-                    isNewPasswordVisible ? Icons.remove_red_eye : Icons.visibility_off,
+                    isNewPasswordVisible ? Icons.visibility_off : Icons.remove_red_eye,
                   ),
                   onPressed: () {
                     setState(() {
@@ -146,7 +156,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
             const Padding(
               padding: EdgeInsets.only(left: 5, bottom: 5),
               child: Text('CONFIRM PASSWORD'),
@@ -158,7 +167,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 hintText: "Confirm your new password",
                 suffixIcon: IconButton(
                   icon: Icon(
-                    isConfirmPasswordVisible ? Icons.remove_red_eye : Icons.visibility_off,
+                    isConfirmPasswordVisible ? Icons.visibility_off : Icons.remove_red_eye,
                   ),
                   onPressed: () {
                     setState(() {
@@ -172,7 +181,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
               ),
             ),
             const SizedBox(height: 40),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: SizedBox(
